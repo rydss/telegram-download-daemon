@@ -10,7 +10,7 @@ import math
 from sessionManager import getSession, saveSession
 
 from telethon import TelegramClient, events
-from telethon.tl.types import PeerChannel, DocumentAttributeFilename, DocumentAttributeVideo
+from telethon.tl.types import PeerChannel, DocumentAttributeFilename, DocumentAttributeVideo, MessageMediaDocument
 import logging
 
 logging.basicConfig(format='[%(levelname) 5s/%(asctime)s]%(name)s:%(message)s',
@@ -74,7 +74,7 @@ proxy = None
 async def sendHelloMessage(client, peerChannel):
     entity = await client.get_entity(peerChannel)
     print("Hi! Ready for your files!")
-    await client.send_message(entity, "Hi! Ready for your files!")
+#    await client.send_message(entity, "Hi! Ready for your files!")
  
 
 async def log_reply(event : events.ChatAction.Event, reply):
@@ -112,7 +112,7 @@ with TelegramClient(getSession(), api_id, api_hash,
         if event.to_id != peerChannel:
             return
 
-        print(event)
+        #print(event)
 
         if not event.media and event.message:
             command = event.message.message
@@ -134,27 +134,32 @@ with TelegramClient(getSession(), api_id, api_hash,
             await log_reply(event, output)
 
         if event.media:
-            filename=getFilename(event)
-            await log_reply(event, f"{filename} added to queue")
-            queue.put_nowait(event)
+            if isinstance(event.media, MessageMediaDocument):
+                if event.media.document.mime_type == "application/pdf":
+                    filename=getFilename(event)
+                    print(f"{filename} added to queue")
+                    #await log_reply(event, f"{filename} added to queue")
+                    queue.put_nowait(event)
 
     async def worker():
         while True:
             event = await queue.get()
 
             filename=getFilename(event)
-
-            await log_reply(
-                event,
-                f"Downloading file {filename} ({event.media.document.size} bytes)"
-            )
+            docsize = round(event.media.document.size/1048576, 2)
+            print(f"Downloading file {filename} ({docsize} MB)")
+            #await log_reply(
+            #    event,
+            #    f"Downloading file {filename} ({event.media.document.size} bytes)"
+            #)
 
             download_callback = lambda received, total: set_progress(filename, received, total)
 
             await client.download_media(event.message, f"{downloadFolder}/{filename}.partial", progress_callback = download_callback)
             set_progress(filename, 1, 1)
             rename(f"{downloadFolder}/{filename}.partial", f"{downloadFolder}/{filename}")
-            await log_reply(event, f"{filename} ready")
+            print(f"{filename} ready")
+            #await log_reply(event, f"{filename} ready")
 
             queue.task_done()
 
