@@ -1,7 +1,4 @@
 FROM python:3
-
-COPY *.py /
-
-RUN pip install telethon cryptg
-
-CMD [ "python", "./telegram-download-daemon.py" ]
+RUN git clone https://github.com/rydss/telegram-download-daemon.git
+RUN pip install -r /telegram-download-daemon/requirements.txt
+CMD python3 /telegram-download-daemon/telegram-download-daemon.py
