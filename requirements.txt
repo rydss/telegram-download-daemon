@@ -5,3 +5,4 @@ pyasn1==0.4.8
 pycparser==2.20
 rsa==4.0
 Telethon==1.12.0
+unidecode==1.1.2
