@@ -6,6 +6,8 @@
 from os import getenv, rename
 import subprocess
 import math
+import pwd
+import unidecode
 
 from sessionManager import getSession, saveSession
 
@@ -157,8 +159,9 @@ with TelegramClient(getSession(), api_id, api_hash,
 
             await client.download_media(event.message, f"{downloadFolder}/{filename}.partial", progress_callback = download_callback)
             set_progress(filename, 1, 1)
-            rename(f"{downloadFolder}/{filename}.partial", f"{downloadFolder}/{filename}")
-            print(f"{filename} ready")
+            clean_filename = unidecode.unidecode(f"{filename}")
+            rename(f"{downloadFolder}/{filename}.partial", f"{downloadFolder}/{clean_filename}")
+            print(f"{clean_filename} ready")
             #await log_reply(event, f"{filename} ready")
 
             queue.task_done()
